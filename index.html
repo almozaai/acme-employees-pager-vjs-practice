@@ -1,0 +1,124 @@
+<html>
+  <header>
+    <style>
+      body {
+  font-family: verdana;
+}
+
+.user,#table-header {
+  display: flex;
+  border-bottom: solid 1px #333;
+}
+
+#table-header {
+  background-color: dodgerBlue;
+  color: white;
+  font-weight: bold;
+}
+.user div,#table-header div {
+  padding: 1rem;
+  font-size: smaller;
+  flex: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.hidden {
+  display: none;
+}
+
+#pager {
+  display: flex;
+  justify-content: space-around;
+  margin: 1rem;
+}
+
+a {
+  color: dodgerBlue;
+}
+
+@media (max-width: 600px){
+  #table-header {
+    display: none;
+  }
+  .user {
+    flex-direction: column;
+  }
+  .user div {
+    padding: 0.5rem;
+  }
+  #pager {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+    </style>
+  </header>
+  <body>
+    <h1>Acme Employee Lister</h1>
+    <div id='pager'></div>
+    <div id="usersList"></div>
+    <script>
+      const usersList = document.querySelector('#usersList')
+      const pager = document.querySelector('#pager')
+
+      const data = async()=>{
+        const idx = window.location.hash ? 1 *window.location.hash.slice(1) : 0;
+        console.log(idx)
+        let response = await fetch(`https://acme-users-api-rev.herokuapp.com/api/users${ idx ?  `/${idx}`: ''}`);
+        response = await response.json();
+        const { users, count } = response;
+        renderUsers(users);
+        renderPager(count, idx);
+      };
+      const renderPager = (count, idx)=>{
+        const totalPages = Math.ceil(count/50);
+        const firstPage = idx === 0;
+        const lastPage = idx === totalPages - 1;
+        const html = `
+          <a href='#'>First</a>
+          <a href='#${ idx === 1 ? '' : idx - 1 }' ${ firstPage ? 'class=hidden': '' }>Previous</a>
+          <a>${ idx + 1 }</a>
+          <a href='#${idx + 1}' ${ lastPage ? 'class=hidden': '' }>Next</a>
+          <a href='#${totalPages - 1}' ${ lastPage ? 'class=hidden': '' }>Last</a>
+        `;
+        pager.innerHTML =html;
+      };
+
+      const renderUsers = (users) => {
+        let html = users.map(user => `
+        <div class='user'>
+          <div>
+            ${ user.firstName }
+          </div>
+          <div>
+            ${ user.lastName }
+          </div>
+          <div>
+            ${ user.email }
+          </div>
+          <div>
+            ${ user.title }
+          </div>
+        </div>
+        `).join('');
+        html = `
+          <div id='table-header'>
+            <div>First Name</div>
+            <div>Last Name</div>
+            <div>Email</div>
+            <div>Title</div>
+          </div>
+          ${html}
+        `
+        usersList.innerHTML = html
+      };
+
+      window.addEventListener('hashchange', ()=>{
+        data()
+      })
+      data();
+    </script>
+  </body>
+</html>
